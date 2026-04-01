@@ -1,0 +1,247 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body, .wrap { background: #1a1a1a; color: #e0e0e0; font-family: sans-serif; }
+.wrap { padding: 1.5rem 1rem; min-height: 100vh; }
+.oct-display { text-align: center; font-size: 18px; font-weight: 500; color: #60aaff; margin-bottom: 1rem; letter-spacing: 1px; }
+.controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 1.2rem; }
+.ctrl-btn { padding: 7px 14px; border-radius: 8px; border: 0.5px solid #444; background: #2a2a2a; color: #e0e0e0; font-size: 12px; cursor: pointer; transition: background 0.08s; }
+.ctrl-btn:hover { background: #333; }
+.ctrl-btn:disabled { opacity: 0.3; cursor: default; }
+.vol-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1.4rem; }
+.vol-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; border-radius: 8px; border: 0.5px solid #333; background: #242424; transition: border-color 0.1s, background 0.1s; }
+.vol-cell.active-oct { border-color: #60aaff; background: #1a3a5c; }
+.vol-cell-label { font-size: 12px; font-weight: 500; color: #888; }
+.vol-cell.active-oct .vol-cell-label { color: #60aaff; }
+.vol-cell-val { font-size: 12px; color: #888; font-family: monospace; }
+.vol-cell.active-oct .vol-cell-val { color: #60aaff; }
+input[type=range] { width: 100%; accent-color: #60aaff; }
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1rem; }
+.pad { border-radius: 10px; border: 0.5px solid #444; background: #2a2a2a; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18px 8px; gap: 6px; transition: background 0.06s, transform 0.06s; user-select: none; }
+.pad:hover { background: #333; }
+.pad.active { background: #1a3a5c; border-color: #60aaff; transform: scale(0.95); }
+.pad .note { font-size: 15px; font-weight: 500; color: #e0e0e0; }
+.pad .freq { font-size: 11px; color: #666; font-family: monospace; }
+.pad .key  { font-size: 10px; background: #333; color: #888; border-radius: 4px; padding: 2px 5px; font-family: monospace; }
+.hint { text-align: center; font-size: 12px; color: #555; }
+</style>
+
+<div class="wrap">
+  <div class="oct-display" id="octDisplay">Octava 3</div>
+  <div class="controls">
+    <button class="ctrl-btn" id="btnDown">← Alt</button>
+    <button class="ctrl-btn" id="btnReset"></button>
+    <button class="ctrl-btn" id="btnUp">Space →</button>
+  </div>
+  <div class="vol-grid" id="volGrid"></div>
+  <div class="grid" id="grid"></div>
+  <div class="hint">Mantén presionada para sostener</div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURACIÓN GENERAL
+// ============================================================
+var OCTAVE_MIN     = 2;
+var OCTAVE_MAX     = 6;
+var OCTAVE_DEFAULT = 3;   // <-- cambia este número y el botón se actualiza solo
+
+var OCTAVE_VOL = { 2: 1.00, 3: 0.75, 4: 0.50, 5: 0.25, 6: 0.15 };
+
+var ATTACK_TIME  = 0.03;
+var RELEASE_TIME = 1.40;
+
+// ============================================================
+// CÁLCULO DE FRECUENCIA
+// Fórmula: f(midi) = 440 × 2^((midi - 69) / 12)
+// midi=69 → La4=440Hz, midi=60 → Do4
+//
+// REDONDEO: Math.ceil hacia arriba con 2 decimales.
+// La voz tiende a bajarse, la referencia va ligeramente más alta.
+//   Math.ceil  → siempre arriba  (actual)
+//   Math.round → al más cercano
+//   Math.floor → siempre abajo
+// Para cambiar decimales: reemplaza 100 por 10 (1 decimal) o 1 (entero)
+// ============================================================
+function midiToFreq(midi) {
+  var raw = 440 * Math.pow(2, (midi - 69) / 12);
+  return Math.ceil(raw * 100) / 100;
+}
+
+// ============================================================
+// DEFINICIÓN DE NOTAS
+// midi base en octava 4 (Do4=60)
+// ============================================================
+var NOTES = [
+  { name: "Do",   midi: 60, key: "e" },
+  { name: "#Do / bRe",  midi: 61, key: "r" },
+  { name: "Re",   midi: 62, key: "t" },
+  { name: "#Re / bMi",  midi: 63, key: "y" },
+  { name: "Mi",   midi: 64, key: "d" },
+  { name: "Fa",   midi: 65, key: "f" },
+  { name: "#Fa / bSol",  midi: 66, key: "g" },
+  { name: "Sol",  midi: 67, key: "h" },
+  { name: "#Sol / bLa", midi: 68, key: "c" },
+  { name: "La",   midi: 69, key: "v" },
+  { name: "#La / bSi",  midi: 70, key: "b" },
+  { name: "Si",   midi: 71, key: "n" },
+];
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+var currentOctave = OCTAVE_DEFAULT;
+var audioCtx   = null;
+var masterGain = null;
+var active = {};
+var held   = {};
+
+// ============================================================
+// AUDIO
+// ============================================================
+function getCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1.0;
+    masterGain.connect(audioCtx.destination);
+  }
+  return audioCtx;
+}
+
+function updateMasterGain() {
+  if (!masterGain) return;
+  var n = Math.max(1, Object.keys(active).length);
+  masterGain.gain.setTargetAtTime(1.0 / Math.sqrt(n), audioCtx.currentTime, 0.008);
+}
+
+function getFreqForNote(note) {
+  var octaveShift = (currentOctave - 4) * 12;
+  return midiToFreq(note.midi + octaveShift);
+}
+
+function startNote(key, note) {
+  if (active[key]) return;
+  var ctx = getCtx();
+  var noteGain = ctx.createGain();
+  noteGain.gain.setValueAtTime(0, ctx.currentTime);
+  noteGain.gain.linearRampToValueAtTime(OCTAVE_VOL[currentOctave] * 0.7, ctx.currentTime + ATTACK_TIME);
+  noteGain.connect(masterGain);
+  var osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.value = getFreqForNote(note);
+  osc.connect(noteGain);
+  osc.start();
+  active[key] = { osc: osc, noteGain: noteGain };
+  updateMasterGain();
+  var pad = document.getElementById("pad-" + key);
+  if (pad) pad.classList.add("active");
+}
+
+function stopNote(key) {
+  var entry = active[key];
+  if (!entry) return;
+  var ctx = getCtx();
+  entry.noteGain.gain.setValueAtTime(entry.noteGain.gain.value, ctx.currentTime);
+  entry.noteGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + RELEASE_TIME);
+  entry.osc.stop(ctx.currentTime + RELEASE_TIME);
+  delete active[key];
+  updateMasterGain();
+  var pad = document.getElementById("pad-" + key);
+  if (pad) pad.classList.remove("active");
+}
+
+// ============================================================
+// OCTAVA
+// ============================================================
+function setOctave(oct) {
+  if (oct < OCTAVE_MIN || oct > OCTAVE_MAX) return;
+  currentOctave = oct;
+  document.getElementById("octDisplay").textContent = "Octava " + oct;
+  document.getElementById("btnDown").disabled = oct === OCTAVE_MIN;
+  document.getElementById("btnUp").disabled   = oct === OCTAVE_MAX;
+  Object.keys(OCTAVE_VOL).forEach(function(o) {
+    var cell = document.getElementById("volcell-" + o);
+    if (cell) cell.classList.toggle("active-oct", parseInt(o) === oct);
+  });
+  NOTES.forEach(function(note) {
+    var el = document.getElementById("freq-" + note.key);
+    if (el) el.textContent = getFreqForNote(note) + " Hz";
+  });
+}
+
+// ============================================================
+// CONSTRUIR SLIDERS
+// ============================================================
+var volGrid = document.getElementById("volGrid");
+[2,3,4,5,6].forEach(function(oct) {
+  var cell = document.createElement("div");
+  cell.className = "vol-cell";
+  cell.id = "volcell-" + oct;
+  var pct = Math.round(OCTAVE_VOL[oct] * 100);
+  cell.innerHTML =
+    '<span class="vol-cell-label">Oct ' + oct + '</span>' +
+    '<input type="range" min="0" max="100" step="1" value="' + pct + '">' +
+    '<span class="vol-cell-val" id="volval-' + oct + '">' + pct + '%</span>';
+  cell.querySelector("input").addEventListener("input", function(e) {
+    var v = parseInt(e.target.value);
+    OCTAVE_VOL[oct] = v / 100;
+    document.getElementById("volval-" + oct).textContent = v + "%";
+  });
+  volGrid.appendChild(cell);
+});
+
+// ============================================================
+// CONSTRUIR PADS
+// ============================================================
+var grid = document.getElementById("grid");
+NOTES.forEach(function(note) {
+  var pad = document.createElement("div");
+  pad.className = "pad";
+  pad.id = "pad-" + note.key;
+  pad.innerHTML =
+    '<span class="note">' + note.name + '</span>' +
+    '<span class="freq" id="freq-' + note.key + '">' + getFreqForNote(note) + ' Hz</span>' +
+    '<span class="key">' + note.key.toUpperCase() + '</span>';
+  pad.addEventListener("mousedown", function(e) { e.preventDefault(); startNote(note.key, note); pad._held = true; });
+  pad.addEventListener("mouseup",    function() { stopNote(note.key); pad._held = false; });
+  pad.addEventListener("mouseleave", function() { if (pad._held) { stopNote(note.key); pad._held = false; } });
+  pad.addEventListener("touchstart", function(e) { e.preventDefault(); startNote(note.key, note); });
+  pad.addEventListener("touchend",   function(e) { e.preventDefault(); stopNote(note.key); });
+  grid.appendChild(pad);
+});
+
+// ============================================================
+// BOTONES DE OCTAVA
+// ============================================================
+document.getElementById("btnDown").addEventListener("click",  function() { setOctave(currentOctave - 1); });
+document.getElementById("btnUp").addEventListener("click",    function() { setOctave(currentOctave + 1); });
+document.getElementById("btnReset").addEventListener("click", function() { setOctave(OCTAVE_DEFAULT); });
+
+// ============================================================
+// TECLADO
+// ============================================================
+var keyToNote = {};
+NOTES.forEach(function(note) { keyToNote[note.key] = note; });
+
+document.addEventListener("keydown", function(e) {
+  if (e.repeat) return;
+  if (e.key === "Alt")     { e.preventDefault(); setOctave(currentOctave - 1); return; }
+  if (e.key === " ")       { e.preventDefault(); setOctave(currentOctave + 1); return; }
+  if (e.key === "Control") { e.preventDefault(); setOctave(OCTAVE_DEFAULT);    return; }
+  var k = e.key.toLowerCase();
+  if (keyToNote[k] && !held[k]) { held[k] = true; startNote(k, keyToNote[k]); }
+});
+
+document.addEventListener("keyup", function(e) {
+  var k = e.key.toLowerCase();
+  if (held[k]) { delete held[k]; stopNote(k); }
+});
+
+// ============================================================
+// INICIALIZAR
+// ============================================================
+// El botón de reset muestra la octava hogar tomada de OCTAVE_DEFAULT
+document.getElementById("btnReset").textContent = "Oct " + OCTAVE_DEFAULT + " · Ctrl";
+setOctave(OCTAVE_DEFAULT);
+</script>
