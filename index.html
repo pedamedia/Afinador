@@ -1,4 +1,8 @@
 
+<head>
+  <link rel="manifest" href="manifest.json">
+</head>
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body, .wrap { background: #1a1a1a; color: #e0e0e0; font-family: sans-serif; }
@@ -244,4 +248,10 @@ document.addEventListener("keyup", function(e) {
 // El botón de reset muestra la octava hogar tomada de OCTAVE_DEFAULT
 document.getElementById("btnReset").textContent = "Oct " + OCTAVE_DEFAULT + " · Ctrl";
 setOctave(OCTAVE_DEFAULT);
+
+// Para convertirlo en PWA
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+
 </script>
