@@ -45,6 +45,9 @@ input[type=range] { width: 100%; accent-color: #60aaff; }
   <div class="vol-grid" id="volGrid"></div>
   <div class="grid" id="grid"></div>
   <div class="hint">Mantén presionada para sostener</div>
+  <div style="text-align:center; margin-top:0.8rem;">
+    <button class="ctrl-btn" id="btnKeymap">⌨ QWERTY</button>
+  </div>
 </div>
 
 <script>
@@ -53,7 +56,7 @@ input[type=range] { width: 100%; accent-color: #60aaff; }
 // ============================================================
 var OCTAVE_MIN     = 2;
 var OCTAVE_MAX     = 6;
-var OCTAVE_DEFAULT = 3;   // <-- cambia este número y el botón se actualiza solo
+var OCTAVE_DEFAULT = 3;
 
 var OCTAVE_VOL = { 2: 1.00, 3: 0.75, 4: 0.50, 5: 0.25, 6: 0.15 };
 
@@ -62,15 +65,6 @@ var RELEASE_TIME = 1.40;
 
 // ============================================================
 // CÁLCULO DE FRECUENCIA
-// Fórmula: f(midi) = 440 × 2^((midi - 69) / 12)
-// midi=69 → La4=440Hz, midi=60 → Do4
-//
-// REDONDEO: Math.ceil hacia arriba con 2 decimales.
-// La voz tiende a bajarse, la referencia va ligeramente más alta.
-//   Math.ceil  → siempre arriba  (actual)
-//   Math.round → al más cercano
-//   Math.floor → siempre abajo
-// Para cambiar decimales: reemplaza 100 por 10 (1 decimal) o 1 (entero)
 // ============================================================
 function midiToFreq(midi) {
   var raw = 440 * Math.pow(2, (midi - 69) / 12);
@@ -79,21 +73,21 @@ function midiToFreq(midi) {
 
 // ============================================================
 // DEFINICIÓN DE NOTAS
-// midi base en octava 4 (Do4=60)
+// key = QWERTY, keyNum = teclado numérico
 // ============================================================
 var NOTES = [
-  { name: "Do",   midi: 60, key: "e" },
-  { name: "#Do / bRe",  midi: 61, key: "r" },
-  { name: "Re",   midi: 62, key: "t" },
-  { name: "#Re / bMi",  midi: 63, key: "y" },
-  { name: "Mi",   midi: 64, key: "d" },
-  { name: "Fa",   midi: 65, key: "f" },
-  { name: "#Fa / bSol",  midi: 66, key: "g" },
-  { name: "Sol",  midi: 67, key: "h" },
-  { name: "#Sol / bLa", midi: 68, key: "c" },
-  { name: "La",   midi: 69, key: "v" },
-  { name: "#La / bSi",  midi: 70, key: "b" },
-  { name: "Si",   midi: 71, key: "n" },
+  { name: "Do",          midi: 60, key: "e", keyNum: "7" },
+  { name: "#Do / bRe",  midi: 61, key: "r", keyNum: "8" },
+  { name: "Re",          midi: 62, key: "t", keyNum: "9" },
+  { name: "#Re / bMi",  midi: 63, key: "y", keyNum: "+" },
+  { name: "Mi",          midi: 64, key: "d", keyNum: "4" },
+  { name: "Fa",          midi: 65, key: "f", keyNum: "5" },
+  { name: "#Fa / bSol", midi: 66, key: "g", keyNum: "6" },
+  { name: "Sol",         midi: 67, key: "h", keyNum: "backspace" },
+  { name: "#Sol / bLa", midi: 68, key: "c", keyNum: "1" },
+  { name: "La",          midi: 69, key: "v", keyNum: "2" },
+  { name: "#La / bSi",  midi: 70, key: "b", keyNum: "3" },
+  { name: "Si",          midi: 71, key: "n", keyNum: "enter" },
 ];
 
 // ============================================================
@@ -104,17 +98,16 @@ var audioCtx   = null;
 var masterGain = null;
 var active = {};
 var held   = {};
+var useNumpad = false;
 
-//=============================================================
-// PARA QUE LA PANTALLA SE QUEDE PRENDIDA
-
+// Wake Lock — mantiene la pantalla activa
 var wakeLock = null;
 async function requestWakeLock() {
   if ('wakeLock' in navigator) {
     try { wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
   }
 }
-document.addEventListener('visibilitychange', () => {
+document.addEventListener('visibilitychange', function() {
   if (document.visibilityState === 'visible') requestWakeLock();
 });
 
@@ -127,7 +120,7 @@ function getCtx() {
     masterGain = audioCtx.createGain();
     masterGain.gain.value = 1.0;
     masterGain.connect(audioCtx.destination);
-    requestWakeLock(); // esto es solo para mantener la pantalla prendida
+    requestWakeLock();
   }
   return audioCtx;
 }
@@ -157,11 +150,11 @@ function startNote(key, note) {
   osc.start();
   active[key] = { osc: osc, noteGain: noteGain };
   updateMasterGain();
-  var pad = document.getElementById("pad-" + key);
+  var pad = document.getElementById("pad-" + note.key);
   if (pad) pad.classList.add("active");
 }
 
-function stopNote(key) {
+function stopNote(key, noteKey) {
   var entry = active[key];
   if (!entry) return;
   var ctx = getCtx();
@@ -170,7 +163,8 @@ function stopNote(key) {
   entry.osc.stop(ctx.currentTime + RELEASE_TIME);
   delete active[key];
   updateMasterGain();
-  var pad = document.getElementById("pad-" + key);
+  var padKey = noteKey || key;
+  var pad = document.getElementById("pad-" + padKey);
   if (pad) pad.classList.remove("active");
 }
 
@@ -225,7 +219,7 @@ NOTES.forEach(function(note) {
   pad.innerHTML =
     '<span class="note">' + note.name + '</span>' +
     '<span class="freq" id="freq-' + note.key + '">' + getFreqForNote(note) + ' Hz</span>' +
-    '<span class="key">' + note.key.toUpperCase() + '</span>';
+    '<span class="key" id="keylabel-' + note.key + '">' + note.key.toUpperCase() + '</span>';
   pad.addEventListener("mousedown", function(e) { e.preventDefault(); startNote(note.key, note); pad._held = true; });
   pad.addEventListener("mouseup",    function() { stopNote(note.key); pad._held = false; });
   pad.addEventListener("mouseleave", function() { if (pad._held) { stopNote(note.key); pad._held = false; } });
@@ -242,6 +236,22 @@ document.getElementById("btnUp").addEventListener("click",    function() { setOc
 document.getElementById("btnReset").addEventListener("click", function() { setOctave(OCTAVE_DEFAULT); });
 
 // ============================================================
+// BOTÓN MAPA DE TECLADO
+// ============================================================
+// Mapa invertido: keyNum → note (para búsqueda rápida)
+var numToNote = {};
+NOTES.forEach(function(note) { numToNote[note.keyNum.toLowerCase()] = note; });
+
+document.getElementById("btnKeymap").addEventListener("click", function() {
+  useNumpad = !useNumpad;
+  this.textContent = useNumpad ? "⌨ Numérico" : "⌨ QWERTY";
+  NOTES.forEach(function(note) {
+    var el = document.getElementById("keylabel-" + note.key);
+    if (el) el.textContent = useNumpad ? note.keyNum.toUpperCase() : note.key.toUpperCase();
+  });
+});
+
+// ============================================================
 // TECLADO
 // ============================================================
 var keyToNote = {};
@@ -249,26 +259,42 @@ NOTES.forEach(function(note) { keyToNote[note.key] = note; });
 
 document.addEventListener("keydown", function(e) {
   if (e.repeat) return;
-  if (e.key === "Alt")     { e.preventDefault(); setOctave(currentOctave - 1); return; }
-  if (e.key === " ")       { e.preventDefault(); setOctave(currentOctave + 1); return; }
-  if (e.key === "Control") { e.preventDefault(); setOctave(OCTAVE_DEFAULT);    return; }
   var k = e.key.toLowerCase();
-  if (keyToNote[k] && !held[k]) { held[k] = true; startNote(k, keyToNote[k]); }
+
+  if (useNumpad) {
+    if (k === "0")          { e.preventDefault(); setOctave(currentOctave - 1); return; }
+    if (k === " ")          { e.preventDefault(); setOctave(currentOctave + 1); return; }
+    if (k === ".")          { e.preventDefault(); setOctave(OCTAVE_DEFAULT);    return; }
+    var numNote = numToNote[k];
+    if (numNote && !held[k]) { held[k] = true; startNote(k, numNote); }
+  } else {
+    if (e.key === "Alt")     { e.preventDefault(); setOctave(currentOctave - 1); return; }
+    if (e.key === " ")       { e.preventDefault(); setOctave(currentOctave + 1); return; }
+    if (e.key === "Control") { e.preventDefault(); setOctave(OCTAVE_DEFAULT);    return; }
+    if (keyToNote[k] && !held[k]) { held[k] = true; startNote(k, keyToNote[k]); }
+  }
 });
 
 document.addEventListener("keyup", function(e) {
   var k = e.key.toLowerCase();
-  if (held[k]) { delete held[k]; stopNote(k); }
+  if (held[k]) {
+    delete held[k];
+    // En modo numérico, la nota tiene su propio key de pad (note.key)
+    if (useNumpad) {
+      var numNote = numToNote[k];
+      if (numNote) stopNote(k, numNote.key);
+    } else {
+      stopNote(k);
+    }
+  }
 });
 
 // ============================================================
 // INICIALIZAR
 // ============================================================
-// El botón de reset muestra la octava hogar tomada de OCTAVE_DEFAULT
 document.getElementById("btnReset").textContent = "Oct " + OCTAVE_DEFAULT + " · Ctrl";
 setOctave(OCTAVE_DEFAULT);
 
-// Para convertirlo en PWA
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
