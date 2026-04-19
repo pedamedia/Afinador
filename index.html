@@ -105,6 +105,19 @@ var masterGain = null;
 var active = {};
 var held   = {};
 
+//=============================================================
+// PARA QUE LA PANTALLA SE QUEDE PRENDIDA
+
+var wakeLock = null;
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') requestWakeLock();
+});
+
 // ============================================================
 // AUDIO
 // ============================================================
@@ -114,6 +127,7 @@ function getCtx() {
     masterGain = audioCtx.createGain();
     masterGain.gain.value = 1.0;
     masterGain.connect(audioCtx.destination);
+    requestWakeLock(); // esto es solo para mantener la pantalla prendida
   }
   return audioCtx;
 }
