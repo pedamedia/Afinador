@@ -1,4 +1,4 @@
-const CACHE_NAME = "Afinador-cache-v1";
+const CACHE_NAME = "Afinador-cache-v2";
 
 const urlsToCache = [
   "./",
