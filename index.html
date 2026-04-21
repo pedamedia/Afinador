@@ -46,7 +46,7 @@ input[type=range] { width: 100%; accent-color: #60aaff; }
   <div class="grid" id="grid"></div>
   <div class="hint">Mantén presionada para sostener</div>
   <div style="text-align:center; margin-top:0.8rem;">
-    <button class="ctrl-btn" id="btnKeymap">⌨ QWERTY</button>
+    <button class="ctrl-btn" id="btnKeymap">⌨ Numérico</button>
   </div>
 </div>
 
@@ -98,7 +98,7 @@ var audioCtx   = null;
 var masterGain = null;
 var active = {};
 var held   = {};
-var useNumpad = false;
+var useNumpad = true;
 
 // Wake Lock — mantiene la pantalla activa
 var wakeLock = null;
