@@ -75,6 +75,7 @@ function midiToFreq(midi) {
 // DEFINICIÓN DE NOTAS
 // key = QWERTY, keyNum = teclado numérico
 // ============================================================
+  
 var NOTES = [
   { name: "Do",          midi: 60, key: "e", keyNum: "7" },
   { name: "#Do / bRe",  midi: 61, key: "r", keyNum: "8" },
@@ -294,6 +295,12 @@ document.addEventListener("keyup", function(e) {
 // ============================================================
 document.getElementById("btnReset").textContent = "Oct " + OCTAVE_DEFAULT + " · Ctrl";
 setOctave(OCTAVE_DEFAULT);
+
+// comience en teclas numericas
+NOTES.forEach(function(note) {
+  var el = document.getElementById("keylabel-" + note.key);
+  if (el) el.textContent = note.keyNum.toUpperCase();
+});
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
