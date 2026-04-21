@@ -79,11 +79,11 @@ var NOTES = [
   { name: "Do",          midi: 60, key: "e", keyNum: "7" },
   { name: "#Do / bRe",  midi: 61, key: "r", keyNum: "8" },
   { name: "Re",          midi: 62, key: "t", keyNum: "9" },
-  { name: "#Re / bMi",  midi: 63, key: "y", keyNum: "+" },
+  { name: "#Re / bMi",  midi: 63, key: "y", keyNum: "-" },
   { name: "Mi",          midi: 64, key: "d", keyNum: "4" },
   { name: "Fa",          midi: 65, key: "f", keyNum: "5" },
   { name: "#Fa / bSol", midi: 66, key: "g", keyNum: "6" },
-  { name: "Sol",         midi: 67, key: "h", keyNum: "backspace" },
+  { name: "Sol",         midi: 67, key: "h", keyNum: "+" },
   { name: "#Sol / bLa", midi: 68, key: "c", keyNum: "1" },
   { name: "La",          midi: 69, key: "v", keyNum: "2" },
   { name: "#La / bSi",  midi: 70, key: "b", keyNum: "3" },
@@ -263,8 +263,8 @@ document.addEventListener("keydown", function(e) {
 
   if (useNumpad) {
     if (k === "0")          { e.preventDefault(); setOctave(currentOctave - 1); return; }
-    if (k === " ")          { e.preventDefault(); setOctave(currentOctave + 1); return; }
-    if (k === ".")          { e.preventDefault(); setOctave(OCTAVE_DEFAULT);    return; }
+    if (k === ".")          { e.preventDefault(); setOctave(currentOctave + 1); return; }
+    if (k === "backspace")          { e.preventDefault(); setOctave(OCTAVE_DEFAULT);    return; }
     var numNote = numToNote[k];
     if (numNote && !held[k]) { held[k] = true; startNote(k, numNote); }
   } else {
