@@ -637,7 +637,10 @@ function normalizeKey(e) {
 }
 
 document.addEventListener("keydown", function(e) {
-  if (e.repeat) return;
+  if (e.repeat){ 
+    e.preventDefault();
+    return;
+  }
   var k   = normalizeKey(e);
   var lay = LAYOUTS[activeLayoutId];
 
