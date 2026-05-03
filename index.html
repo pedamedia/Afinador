@@ -71,9 +71,10 @@
       font-size: 11px;
       font-family: inherit;
       cursor: pointer;
-      transition: background 0.08s, color 0.08s;
+      transition: background 0.08s, color 0.08s, transform 0.06s, border-color 0.06s;
     }
     .ctrl-btn:hover    { background: var(--surface-2); color: var(--text); }
+    .ctrl-btn.active   { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); transform: scale(0.94); }
     .ctrl-btn:disabled { opacity: 0.3; cursor: default; }
 
     /* ════════════════════════════════════════════════════════
@@ -176,7 +177,6 @@
       align-items: center;
       gap: 6px;
     }
-    .hint { font-size: 11px; color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -186,9 +186,9 @@
 
 <!-- ── OCTAVE CONTROLS ────────────────────────────────── -->
 <div class="oct-controls">
-  <button class="ctrl-btn" id="btnDown">← bajar</button>
-  <button class="ctrl-btn" id="btnReset"></button>
-  <button class="ctrl-btn" id="btnUp">subir →</button>
+  <button class="ctrl-btn" id="btnDown">← bajar<br><span class="pad-key" id="keyDown"></span></button>
+  <button class="ctrl-btn" id="btnReset"><span id="resetLabel"></span><br><span class="pad-key" id="keyHome"></span></button>
+  <button class="ctrl-btn" id="btnUp">subir →<br><span class="pad-key" id="keyUp"></span></button>
 </div>
 
 <!-- ── VOLUME SLIDERS ────────────────────────────────── -->
@@ -204,7 +204,6 @@
     no el que está activo. Arranca en numérico → muestra QWERTY.
   -->
   <button class="ctrl-btn" id="btnLayout">⌨ QWERTY</button>
-  <div class="hint" id="hintText"></div>
 </div>
 
 <script>
@@ -233,7 +232,6 @@ var OCTAVE_VOL = { 2: 1.00, 3: 0.75, 4: 0.50, 5: 0.25, 6: 0.15 };
 // LAYOUT DEFINITIONS
 //
 // Cada layout define:
-//   hint       — texto de atajos que aparece en el footer
 //   rows       — filas de pads, declaradas de abajo hacia arriba
 //   octaveDown/Up/Home — teclas de control de octava
 //
@@ -262,7 +260,6 @@ var OCTAVE_VOL = { 2: 1.00, 3: 0.75, 4: 0.50, 5: 0.25, 6: 0.15 };
 var LAYOUTS = {
 
   numpad: {
-    hint: "Octava: 0 ↓ &nbsp; . ↑ &nbsp; Tab home",
     octaveDown: "0",
     octaveUp:   ".",
     octaveHome: "tab",
@@ -298,7 +295,6 @@ var LAYOUTS = {
   },
 
   qwerty: {
-    hint: "Octava: Alt ↓ &nbsp; Space ↑ &nbsp; Ctrl home",
     octaveDown: "alt",
     octaveUp:   "space",
     octaveHome: "ctrl",
@@ -513,7 +509,7 @@ function setOctave(oct) {
   State.octave = oct;
 
   document.getElementById("octDisplay").textContent = "Octava " + oct;
-  document.getElementById("btnReset").textContent   = "Oct " + CFG.OCTAVE_DEFAULT;
+  document.getElementById("resetLabel").textContent = "Oct " + CFG.OCTAVE_DEFAULT;
   document.getElementById("btnDown").disabled = oct === CFG.OCTAVE_MIN;
   document.getElementById("btnUp").disabled   = oct === CFG.OCTAVE_MAX;
 
@@ -550,6 +546,14 @@ function keyLabel(key) {
   if (key === "backspace") return "⌫";
   if (key === "enter")     return "↵";
   return key.toUpperCase();
+}
+
+// Actualiza los chips de tecla de los botones de octava según el layout activo.
+function updateOctaveButtonTitles(layoutId) {
+  var lay = LAYOUTS[layoutId];
+  document.getElementById("keyDown").textContent = lay.octaveDown.toUpperCase();
+  document.getElementById("keyUp").textContent   = lay.octaveUp.toUpperCase();
+  document.getElementById("keyHome").textContent = lay.octaveHome.toUpperCase();
 }
 
 
@@ -646,9 +650,9 @@ document.addEventListener("keydown", function(e) {
   var lay = LAYOUTS[activeLayoutId];
 
   // ── Controles de octava (específicos por layout) ─────────
-  if (k === lay.octaveDown) { e.preventDefault(); setOctave(State.octave - 1);   return; }
-  if (k === lay.octaveUp)   { e.preventDefault(); setOctave(State.octave + 1);   return; }
-  if (k === lay.octaveHome) { e.preventDefault(); setOctave(CFG.OCTAVE_DEFAULT); return; }
+  if (k === lay.octaveDown) { e.preventDefault(); setOctave(State.octave - 1);   flashBtn("btnDown");   return; }
+  if (k === lay.octaveUp)   { e.preventDefault(); setOctave(State.octave + 1);   flashBtn("btnUp");     return; }
+  if (k === lay.octaveHome) { e.preventDefault(); setOctave(CFG.OCTAVE_DEFAULT); flashBtn("btnReset");  return; }
 
   // ── Disparar nota ────────────────────────────────────────
   var pad = KEY_MAP[k];
@@ -661,6 +665,7 @@ document.addEventListener("keydown", function(e) {
 
 document.addEventListener("keyup", function(e) {
   var k = normalizeKey(e);
+  var lay = LAYOUTS[activeLayoutId];
   if (State.held[k]) {
     delete State.held[k];
     var pad = KEY_MAP[k];
@@ -672,6 +677,21 @@ document.addEventListener("keyup", function(e) {
 // ════════════════════════════════════════════════════════════
 // BUTTON EVENTS
 // ════════════════════════════════════════════════════════════
+
+function flashBtn(id) {
+  var el = document.getElementById(id);
+  el.classList.add("active");
+  setTimeout(function() { el.classList.remove("active"); }, 150);
+}
+
+["btnDown", "btnUp", "btnReset"].forEach(function(id) {
+  var el = document.getElementById(id);
+  el.addEventListener("mousedown",  function() { el.classList.add("active"); });
+  el.addEventListener("mouseup",    function() { el.classList.remove("active"); });
+  el.addEventListener("mouseleave", function() { el.classList.remove("active"); });
+  el.addEventListener("touchstart", function(e) { e.preventDefault(); el.classList.add("active"); });
+  el.addEventListener("touchend",   function(e) { e.preventDefault(); el.classList.remove("active"); });
+});
 
 document.getElementById("btnDown").addEventListener("click", function() {
   setOctave(State.octave - 1);
@@ -689,13 +709,11 @@ document.getElementById("btnLayout").addEventListener("click", function() {
 
   switchLayout(nextId);
   buildPadGrid();
+  updateOctaveButtonTitles(nextId);
 
   // El botón siempre muestra el layout al que se CAMBIARÁ en el próximo click
   var oppositeId = nextId === "numpad" ? "qwerty" : "numpad";
   this.textContent = "⌨ " + (oppositeId === "numpad" ? "Numérico" : "QWERTY");
-
-  // Actualizar hint de atajos de teclado
-  document.getElementById("hintText").innerHTML = LAYOUTS[nextId].hint;
 });
 
 
@@ -706,7 +724,7 @@ document.getElementById("btnLayout").addEventListener("click", function() {
 switchLayout("numpad");
 buildPadGrid();
 setOctave(CFG.OCTAVE_DEFAULT);
-document.getElementById("hintText").innerHTML = LAYOUTS["numpad"].hint;
+updateOctaveButtonTitles("numpad");
 
 // Service Worker para funcionamiento offline e instalación en Android
 if ("serviceWorker" in navigator) {
