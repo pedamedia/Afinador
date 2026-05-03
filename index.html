@@ -254,7 +254,7 @@ var OCTAVE_VOL = { 2: 1.00, 3: 0.75, 4: 0.50, 5: 0.25, 6: 0.15 };
 //   [ 1=Do   ][ 2=Do#   ][ 3=Re   ][ ↵=Re# ]
 //
 // ── QWERTY ──────────────────────────────────────────────────
-//   [ 3=Do+1 ][ 4=Do#+1 ][ 5=Re+1 ]
+//   [ 3=Do+1 ][ 4=Do#+1 ][ 5=Re+1 ][ 6=Re#+1]
 //   [ e=Sol# ][ r=La    ][ t=La#  ][ y=Si  ]
 //   [ d=Mi   ][ f=Fa    ][ g=Fa#  ][ h=Sol ]
 //   [ c=Do   ][ v=Do#   ][ b=Re   ][ n=Re# ]
@@ -270,29 +270,29 @@ var LAYOUTS = {
       // Row 0 — fila inferior
       { cols: 4, pads: [
         { name: "Do",         midi: 60, octOffset: 0, key: "1"         },
-        { name: "Do# / Reb",  midi: 61, octOffset: 0, key: "2"         },
+        { name: "#Do / bRe",  midi: 61, octOffset: 0, key: "2"         },
         { name: "Re",         midi: 62, octOffset: 0, key: "3"         },
-        { name: "Re# / Mib",  midi: 63, octOffset: 0, key: "enter"     },
+        { name: "#Re / bMi",  midi: 63, octOffset: 0, key: "enter"     },
       ]},
       // Row 1
       { cols: 4, pads: [
         { name: "Mi",         midi: 64, octOffset: 0, key: "4"         },
         { name: "Fa",         midi: 65, octOffset: 0, key: "5"         },
-        { name: "Fa# / Solb", midi: 66, octOffset: 0, key: "6"         },
+        { name: "#Fa / bSol", midi: 66, octOffset: 0, key: "6"         },
         { name: "Sol",        midi: 67, octOffset: 0, key: "+"         },
       ]},
       // Row 2
       { cols: 4, pads: [
-        { name: "Sol# / Lab", midi: 68, octOffset: 0, key: "7"         },
+        { name: "#Sol / bLa", midi: 68, octOffset: 0, key: "7"         },
         { name: "La",         midi: 69, octOffset: 0, key: "8"         },
-        { name: "La# / Sib",  midi: 70, octOffset: 0, key: "9"         },
+        { name: "#La / bSi",  midi: 70, octOffset: 0, key: "9"         },
         { name: "Si",         midi: 71, octOffset: 0, key: "-"         },
       ]},
       // Row 3 — fila superior (octava + 1)
       { cols: 3, pads: [
-        { name: "Do +8va",    midi: 60, octOffset: 1, key: "/"         },
-        { name: "Do# +8va",   midi: 61, octOffset: 1, key: "*"         },
-        { name: "Re +8va",    midi: 62, octOffset: 1, key: "backspace"  },
+        { name: "Do'",         midi: 60, octOffset: 1, key: "/"         },
+        { name: "#Do' / bRe'", midi: 61, octOffset: 1, key: "*"         },
+        { name: "Re'",         midi: 62, octOffset: 1, key: "backspace"  },
       ]},
     ],
   },
@@ -306,29 +306,30 @@ var LAYOUTS = {
       // Row 0 — fila inferior
       { cols: 4, pads: [
         { name: "Do",         midi: 60, octOffset: 0, key: "c"         },
-        { name: "Do# / Reb",  midi: 61, octOffset: 0, key: "v"         },
+        { name: "#Do / bRe",  midi: 61, octOffset: 0, key: "v"         },
         { name: "Re",         midi: 62, octOffset: 0, key: "b"         },
-        { name: "Re# / Mib",  midi: 63, octOffset: 0, key: "n"         },
+        { name: "#Re / bMi",  midi: 63, octOffset: 0, key: "n"         },
       ]},
       // Row 1
       { cols: 4, pads: [
         { name: "Mi",         midi: 64, octOffset: 0, key: "d"         },
         { name: "Fa",         midi: 65, octOffset: 0, key: "f"         },
-        { name: "Fa# / Solb", midi: 66, octOffset: 0, key: "g"         },
+        { name: "#Fa / bSol", midi: 66, octOffset: 0, key: "g"         },
         { name: "Sol",        midi: 67, octOffset: 0, key: "h"         },
       ]},
       // Row 2
       { cols: 4, pads: [
-        { name: "Sol# / Lab", midi: 68, octOffset: 0, key: "e"         },
+        { name: "#Sol / bLa", midi: 68, octOffset: 0, key: "e"         },
         { name: "La",         midi: 69, octOffset: 0, key: "r"         },
-        { name: "La# / Sib",  midi: 70, octOffset: 0, key: "t"         },
+        { name: "#La / bSi",  midi: 70, octOffset: 0, key: "t"         },
         { name: "Si",         midi: 71, octOffset: 0, key: "y"         },
       ]},
       // Row 3 — fila superior (octava + 1)
-      { cols: 3, pads: [
-        { name: "Do +8va",    midi: 60, octOffset: 1, key: "3"         },
-        { name: "Do# +8va",   midi: 61, octOffset: 1, key: "4"         },
-        { name: "Re +8va",    midi: 62, octOffset: 1, key: "5"         },
+      { cols: 4, pads: [
+        { name: "Do'",         midi: 60, octOffset: 1, key: "3"         },
+        { name: "#Do' / bRe'", midi: 61, octOffset: 1, key: "4"         },
+        { name: "Re'",         midi: 62, octOffset: 1, key: "5"         },
+        { name: "#Re' / bMi'", midi: 63, octOffset: 1, key: "6"         },
       ]},
     ],
   },
