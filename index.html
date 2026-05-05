@@ -286,10 +286,11 @@ var LAYOUTS = {
         { name: "Si",         midi: 71, octOffset: 0, key: "-"         },
       ]},
       // Row 3 — fila superior (octava + 1)
-      { cols: 3, pads: [
-        { name: "Do'",         midi: 60, octOffset: 1, key: "/"         },
-        { name: "#Do' / bRe'", midi: 61, octOffset: 1, key: "*"         },
-        { name: "Re'",         midi: 62, octOffset: 1, key: "backspace"  },
+      { cols: 4, pads: [
+        { name: "Do'",         midi: 60, octOffset: 1, key: "numlock"         },
+        { name: "#Do' / bRe'", midi: 61, octOffset: 1, key: "/"         },
+        { name: "Re'",         midi: 62, octOffset: 1, key: "*"  },
+        { name: "#Re' / bMi'", midi: 63, octOffset: 1, key: "backspace"  },
       ]},
     ],
   },
@@ -638,6 +639,23 @@ function normalizeKey(e) {
   if (k === "Alt")       return "alt";
   if (k === " ")         return "space";
   if (k === "Control")   return "ctrl";
+
+  if (k === "NumLock" || e.code === "NumLock") return "numlock";
+  if (k === "LaunchCalculator" || e.code === "LaunchApp2") return "tab";
+  if (k === "LaunchMail" || e.code === "LaunchMail") return "tab";
+
+  if (e.code === "NumpadDecimal") return ".";
+  if (e.code === "Numpad0") return "0";
+  if (e.code === "Numpad1") return "1";
+  if (e.code === "Numpad2") return "2";
+  if (e.code === "Numpad3") return "3";
+  if (e.code === "Numpad4") return "4";
+  if (e.code === "Numpad5") return "5";
+  if (e.code === "Numpad6") return "6";
+  if (e.code === "Numpad7") return "7";
+  if (e.code === "Numpad8") return "8";
+  if (e.code === "Numpad9") return "9";
+  
   return k.toLowerCase();
 }
 
