@@ -641,7 +641,7 @@ function normalizeKey(e) {
   if (k === "Control")   return "ctrl";
 
   if (k === "NumLock" || e.code === "NumLock") return "numlock";
-  if (k === "LaunchCalculator" || e.code === "LaunchApp2") return "tab";
+  if (k === "LaunchCalculator" || k === "LaunchApplication2" || e.code === "LaunchApp2") return "tab";
   if (k === "LaunchMail" || e.code === "LaunchMail") return "tab";
 
   if (e.code === "NumpadDecimal") return ".";
@@ -660,6 +660,10 @@ function normalizeKey(e) {
 }
 
 document.addEventListener("keydown", function(e) {
+  
+  if (e.key === "LaunchCalculator" || e.key === "LaunchApplication2") e.preventDefault();
+  if (e.key === "LaunchMail" ) e.preventDefault();
+  
   if (e.repeat){ 
     e.preventDefault();
     return;
