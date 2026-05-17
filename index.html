@@ -717,8 +717,8 @@ function flashBtn(id) {
   el.addEventListener("mouseleave", function() { el.classList.remove("active"); });
   //el.addEventListener("touchstart", function(e) { e.preventDefault(); el.classList.add("active"); });
   el.addEventListener("touchstart", function() { el.classList.add("active"); });
-  el.addEventListener("touchend",   function(e) { e.preventDefault(); el.classList.remove("active"); });
-  //el.addEventListener("touchend",   function() { el.classList.remove("active"); });
+  //el.addEventListener("touchend",   function(e) { e.preventDefault(); el.classList.remove("active"); });
+  el.addEventListener("touchend",   function() { el.classList.remove("active"); });
 });
 
 document.getElementById("btnDown").addEventListener("click", function() {
