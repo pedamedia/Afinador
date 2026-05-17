@@ -709,6 +709,7 @@ function flashBtn(id) {
   setTimeout(function() { el.classList.remove("active"); }, 150);
 }
 
+/*
 ["btnDown", "btnUp", "btnReset"].forEach(function(id) {
   var el = document.getElementById(id);
   el.addEventListener("mousedown",  function() { el.classList.add("active"); });
@@ -718,6 +719,14 @@ function flashBtn(id) {
   el.addEventListener("touchstart", function() { el.classList.add("active"); });
   //el.addEventListener("touchend",   function(e) { e.preventDefault(); el.classList.remove("active"); });
   el.addEventListener("touchend",   function() { el.classList.remove("active"); });
+});
+*/
+
+["btnDown", "btnUp", "btnReset"].forEach(function(id) {
+  var el = document.getElementById(id);
+  el.addEventListener("pointerdown", function() { el.classList.add("active"); });
+  el.addEventListener("pointerup",   function() { el.classList.remove("active"); });
+  el.addEventListener("pointerleave",function() { el.classList.remove("active"); });
 });
 
 document.getElementById("btnDown").addEventListener("click", function() {
