@@ -439,7 +439,7 @@ var LAYOUTS = {
     rows: [
       { cols: 4, pads: [
         { name: "Do",  midi: 60, octOffset: 0 },
-        { name: "Di",  midi: 61, octOffset: 0 },
+        { name: "Di", label: "Di = Re",  midi: 61, octOffset: 0 },
         { name: "Ra",  midi: 62, octOffset: 0 },
         { name: "Ri",  midi: 63, octOffset: 0 },
       ]},
@@ -980,7 +980,56 @@ document.getElementById("masterVolSlider").value = 100;
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(function() {});
 }
-</script>
+/*
 
+CONFIGURACION
+---------------------------------------
+Teclado QWERTY
+
+Do=c
+Di=v
+Ra=b
+Ri=n
+Mi=d
+Fa=f
+Fi=g
+Go=h
+Gi=e
+La=r
+Li=t
+Si=y
+Do'=3
+Di'=4
+Ra'=5
+Ri'=6
+Oct-=Alt
+Oct+=Space
+OctRst=Control
+
+---------------------------------------
+Teclado Numerico
+
+Do=Numpad1
+Di=Numpad2
+Ra=Numpad3
+Ri=NumpadEnter
+Mi=Numpad4
+Fa=Numpad5
+Fi=Numpad6
+Go=NumpadAdd
+Gi=Numpad7
+La=Numpad8
+Li=Numpad9
+Si=NumpadSubtract
+Do'=NumLock
+Di'=NumpadDivide
+Ra'=NumpadMultiply
+Ri'=Backspace
+Oct-=Numpad0
+Oct+=NumpadDecimal
+OctRst=Tab
+
+*/
+</script>
 </body>
 </html>
