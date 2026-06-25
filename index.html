@@ -422,7 +422,7 @@ var LAYOUTS = {
     rows: [
       { cols: 4, pads: [
         { name: "Do",  midi: 60, octOffset: 0 },
-        { name: "Di",  midi: 61, octOffset: 0 },
+        { name: "Di", label: "Di = Re",  midi: 61, octOffset: 0 },
         { name: "Ra",  midi: 62, octOffset: 0 },
         { name: "Ri",  midi: 63, octOffset: 0 },
       ]},
@@ -788,7 +788,7 @@ function buildPadGrid() {
       el.id = "pad-" + resolvedPad.key;
 
       el.innerHTML =
-        '<span class="pad-note">' + resolvedPad.name + '</span>' +
+        '<span class="pad-note">' + (resolvedPad.label || resolvedPad.name) + '</span>' +
         '<span class="pad-freq" id="freq-' + resolvedPad.key + '">-- Hz</span>' +
         '<span class="pad-key">' + keyLabel(resolvedPad.key) + '</span>';
 
