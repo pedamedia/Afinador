@@ -955,6 +955,7 @@ switchLayout("numpad");
 buildPadGrid();
 setOctave(CFG.OCTAVE_DEFAULT);
 updateOctaveButtonTitles("numpad");
+document.getElementById("masterVolSlider").value = 100;
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(function() {});
