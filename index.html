@@ -743,9 +743,8 @@ function normalizeKey(e) {
   if (e.key  === "Control") return "Control";
   if (e.code === "NumLock" || e.code.startsWith("Numpad")) return e.code;
   if (e.code === "Backspace") return "Backspace";
+  
   if (e.code.startsWith("Arrow")) return e.code; 
-
-  if (e.code === "Numpad4") return "4";
   
   return e.key.toLowerCase();
 }
