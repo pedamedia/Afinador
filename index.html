@@ -451,9 +451,9 @@ var KEYMAPS = {
 var LAYOUTS = {
 
   numpad: {
-    octaveDown: "Numpad0",
-    octaveUp:   "NumpadDecimal",
-    octaveHome: "Tab",
+    octaveDown: ["Numpad0"],
+    octaveUp:   ["NumpadDecimal"],
+    octaveHome: ["Tab"],
     keymap:     KEYMAP_NUMPAD,
     rows: [
       { cols: 4, pads: [
@@ -484,9 +484,9 @@ var LAYOUTS = {
   },
 
   qwerty: {
-    octaveDown: "Alt",
-    octaveUp:   "Space",
-    octaveHome: "Control",
+    octaveDown: ["Alt"],
+    octaveUp:   ["Space"],
+    octaveHome: ["Control"],
     keymap:     KEYMAP_QWERTY,
     rows: [
       { cols: 4, pads: [
@@ -554,9 +554,15 @@ function switchLayout(id) {
   }, {});
 
   // Resolver teclas de control de octava desde el keymap
+  /*
   if (keymap["Oct-"])   layout.octaveDown = keymap["Oct-"];
   if (keymap["Oct+"])   layout.octaveUp   = keymap["Oct+"];
   if (keymap["OctRst"]) layout.octaveHome = keymap["OctRst"];
+  */
+
+  if (keymap["Oct-"])   layout.octaveDown = keymap["Oct-"].split("&").map(function(k){ return k.trim(); });
+  if (keymap["Oct+"])   layout.octaveUp   = keymap["Oct+"].split("&").map(function(k){ return k.trim(); });
+  if (keymap["OctRst"]) layout.octaveHome = keymap["OctRst"].split("&").map(function(k){ return k.trim(); });
 }
 
 
@@ -743,9 +749,16 @@ function setPadActive(pad, on) {
 
 function updateOctaveButtonTitles(layoutId) {
   var lay = LAYOUTS[layoutId];
+  /*
   document.getElementById("keyDown").textContent = keyLabel(lay.octaveDown);
   document.getElementById("keyUp").textContent   = keyLabel(lay.octaveUp);
   document.getElementById("keyHome").textContent = keyLabel(lay.octaveHome);
+  */
+  document.getElementById("keyDown").textContent = keyLabel(lay.octaveDown[0]);
+  document.getElementById("keyUp").textContent   = keyLabel(lay.octaveUp[0]);
+  document.getElementById("keyHome").textContent = keyLabel(lay.octaveHome[0]);
+
+  
 }
 
 function isModalOpen() {
@@ -782,10 +795,17 @@ document.addEventListener("keydown", function(e) {
   var k   = normalizeKey(e);
   var lay = LAYOUTS[activeLayoutId];
 
+  /*
   if (k === lay.octaveDown) { e.preventDefault(); if (!State.octHeld) { State.octHeld = true; setOctave(State.octave - 1); flashBtn("btnDown");  } return; }
   if (k === lay.octaveUp)   { e.preventDefault(); if (!State.octHeld) { State.octHeld = true; setOctave(State.octave + 1); flashBtn("btnUp");    } return; }
   if (k === lay.octaveHome) { e.preventDefault(); if (!State.octHeld) { State.octHeld = true; setOctave(CFG.OCTAVE_DEFAULT); flashBtn("btnReset"); } return; }
+  */
 
+  if (lay.octaveDown.includes(k)) { e.preventDefault(); if (!State.octHeld) { State.octHeld = true; setOctave(State.octave - 1); flashBtn("btnDown");  } return; }
+  if (lay.octaveUp.includes(k))   { e.preventDefault(); if (!State.octHeld) { State.octHeld = true; setOctave(State.octave + 1); flashBtn("btnUp");    } return; }
+  if (lay.octaveHome.includes(k)) { e.preventDefault(); if (!State.octHeld) { State.octHeld = true; setOctave(CFG.OCTAVE_DEFAULT); flashBtn("btnReset"); } return; }
+    
+  
   var pad = KEY_MAP[k];
   if (pad && !State.held[k]) {
     e.preventDefault();
@@ -800,7 +820,8 @@ document.addEventListener("keyup", function(e) {
   var k   = normalizeKey(e);
   var lay = LAYOUTS[activeLayoutId];
 
-  if (k === lay.octaveDown || k === lay.octaveUp || k === lay.octaveHome) {
+  //if (k === lay.octaveDown || k === lay.octaveUp || k === lay.octaveHome) {
+  if (lay.octaveDown.includes(k) || lay.octaveUp.includes(k) || lay.octaveHome.includes(k)) {
     State.octHeld = false;
     return;
   }
@@ -950,7 +971,8 @@ function keymapToText(keymap) {
     return name + "=" + keymap[name];
   }).join("\n");
 }
-
+  
+/*
 function textToKeymap(text) {
   var map = {};
   text.trim().split("\n").forEach(function(line) {
@@ -958,6 +980,19 @@ function textToKeymap(text) {
     if (parts.length === 2) {
       map[parts[0].trim()] = parts[1].trim();
     }
+  });
+  return map;
+}
+*/
+  
+function textToKeymap(text) {
+  var map = {};
+  text.trim().split("\n").forEach(function(line) {
+    var idx = line.indexOf("=");
+    if (idx === -1) return;
+    var name  = line.slice(0, idx).trim();
+    var value = line.slice(idx + 1).trim();
+    if (name && value) map[name] = value;
   });
   return map;
 }
