@@ -852,7 +852,8 @@ function buildPadGrid() {
     rowEl.dataset.cols = rowDef.cols;
 
     rowDef.pads.forEach(function(pad) {
-      var resolvedPad = KEY_MAP[LAYOUTS[activeLayoutId].keymap[pad.name]];
+      //var resolvedPad = KEY_MAP[LAYOUTS[activeLayoutId].keymap[pad.name]];
+      var resolvedPad = KEY_MAP[LAYOUTS[activeLayoutId].keymap[pad.name].split("&")[0].trim()];
       if (!resolvedPad) return;
 
       var el = document.createElement("div");
