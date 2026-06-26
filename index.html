@@ -7,16 +7,21 @@
   
   <title>Afinador</title>
   
+  <!-- Favicons para navegadores y dispositivos -->
   <link rel="icon" type="image/png" sizes="16x16" href="logo-16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="logo-32.png">
   <link rel="icon" type="image/png" sizes="48x48" href="logo-48.png">
   <link rel="apple-touch-icon" sizes="180x180" href="logo-180.png">
+  
+  <!-- PWA: manifest para instalación en Android/iOS/escritorio -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a1a1a">
   
   <style>
     /* ════════════════════════════════════════════════════════
        DESIGN TOKENS
+       Variables globales de color, tamaño y espaciado.
+       Cambiar aquí afecta toda la UI uniformemente.
     ════════════════════════════════════════════════════════ */
     :root {
       --bg:         #141414;
@@ -47,6 +52,7 @@
       gap: 1rem;
     }
 
+    /* Texto que muestra la octava activa */
     .oct-display {
       font-size: 1rem;
       font-weight: 600;
@@ -56,7 +62,7 @@
     }
 
     /* ════════════════════════════════════════════════════════
-       BOTONES DE CONTROL
+       BOTONES DE CONTROL (octava, layout, configuración)
     ════════════════════════════════════════════════════════ */
     .oct-controls {
       display: flex;
@@ -81,6 +87,8 @@
 
     /* ════════════════════════════════════════════════════════
        SLIDERS DE VOLUMEN POR OCTAVA
+       5 celdas (Oct 2-6). La celda de la octava activa
+       se resalta con el color de acento.
     ════════════════════════════════════════════════════════ */
     .vol-grid {
       display: grid;
@@ -111,6 +119,7 @@
     .vol-cell.active-oct .vol-cell-val   { color: var(--accent); }
     input[type=range] { width: 100%; accent-color: var(--accent); }
 
+    /* Slider de volumen maestro (footer) */
     .vol-cell-master {
       width: 100%;
       max-width: 520px;
@@ -119,8 +128,9 @@
 
     /* ════════════════════════════════════════════════════════
        GRILLA DE PADS
-       column-reverse hace que Row 0 (inferior en datos)
-       se renderice abajo visualmente, como un teclado físico.
+       flex-direction: column-reverse hace que Row 0
+       (declarado primero en el JS, fila inferior del teclado)
+       se renderice abajo visualmente, igual que un teclado físico.
     ════════════════════════════════════════════════════════ */
     .pad-grid {
       display: flex;
@@ -137,6 +147,7 @@
     .pad-row[data-cols="4"] { grid-template-columns: repeat(4, 1fr); }
     .pad-row[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
 
+    /* Pad individual: muestra nombre de nota, frecuencia y tecla asignada */
     .pad {
       border-radius: var(--radius);
       border: 0.5px solid var(--border);
@@ -167,6 +178,7 @@
     .pad.active .pad-note { color: var(--accent); }
     .pad.active .pad-key  { color: var(--accent); }
 
+    /* Footer con volumen maestro y botones de layout/config */
     .footer {
       display: flex;
       flex-direction: column;
@@ -175,7 +187,9 @@
     }
 
     /* ════════════════════════════════════════════════════════
-       MODAL DE CONFIGURACIÓN DE TECLAS
+       MODAL DE CONFIGURACIÓN DE TECLAS (botón ⚙)
+       Permite al usuario editar el keymap del layout activo.
+       Se abre sobre la app con fondo semitransparente.
     ════════════════════════════════════════════════════════ */
     #configModal {
       display: none;
@@ -210,18 +224,23 @@
       height: 200px;
       resize: none;
     }
+
+    /* Contador de caracteres — se vuelve rojo al acercarse al límite */
     .config-counter {
       font-size: 10px;
       color: var(--text-muted);
       text-align: right;
     }
     .config-counter.warning { color: #ff6b6b; }
+
+    /* Mensaje de error de validación */
     .config-error {
       font-size: 11px;
       color: #ff6b6b;
       display: none;
     }
     .config-error.visible { display: block; }
+
     .config-actions {
       display: flex;
       gap: 8px;
@@ -230,8 +249,10 @@
 
     /* ════════════════════════════════════════════════════════
        BOTONES FLOTANTES EN LANDSCAPE MÓVIL
-       Solo activa cuando la pantalla es angosta en alto
-       (celular girado), no afecta escritorio ni portrait.
+       Cuando el celular está girado (landscape) y la pantalla
+       es angosta en altura, los botones Bajar/Subir octava
+       aparecen fijos a los lados aprovechando el espacio vacío.
+       No afecta portrait ni escritorio.
     ════════════════════════════════════════════════════════ */
     @media (orientation: landscape) and (max-height: 400px) and (min-width: 750px) {
       #btnDown, #btnUp {
@@ -250,18 +271,23 @@
 </head>
 <body>
 
+<!-- Sliders de volumen por octava (construidos dinámicamente por JS) -->
 <div class="vol-grid" id="volGrid"></div>
 
+<!-- Indicador de octava activa -->
 <div class="oct-display" id="octDisplay">Octava 3</div>
 
+<!-- Botones de control de octava con chip de tecla asignada -->
 <div class="oct-controls">
   <button class="ctrl-btn" id="btnDown">← Bajar<br><span class="pad-key" id="keyDown"></span></button>
   <button class="ctrl-btn" id="btnReset"><span id="resetLabel"></span><br><span class="pad-key" id="keyHome"></span></button>
   <button class="ctrl-btn" id="btnUp">Subir →<br><span class="pad-key" id="keyUp"></span></button>
 </div>
 
+<!-- Grilla de pads (construida dinámicamente por JS) -->
 <div class="pad-grid" id="padGrid"></div>
 
+<!-- Footer: volumen maestro, cambio de layout, configuración -->
 <div class="footer">
   <div class="vol-cell vol-cell-master">
     <span class="vol-cell-label">🔊 Volumen</span>
@@ -272,6 +298,7 @@
   <button class="ctrl-btn" id="btnConfig">⚙</button>
 </div>
 
+<!-- Modal de configuración de teclas -->
 <div id="configModal">
   <div class="config-box">
     <span class="oct-display" style="font-size:0.85rem;" id="configTitle">Configuración de teclas</span>
@@ -294,35 +321,42 @@
 
 // ════════════════════════════════════════════════════════════
 // CONFIG GLOBAL
-// Parámetros editables sin tocar la lógica.
+// Parámetros de comportamiento de la app. Editar aquí para
+// ajustar sin tocar la lógica.
 // ════════════════════════════════════════════════════════════
 var CFG = {
-  OCTAVE_MIN:     2,
-  OCTAVE_MAX:     6,
-  OCTAVE_DEFAULT: 3,
-  ATTACK_TIME:    0.03,
-  RELEASE_TIME:   1.40,
-  KEYMAP_MAX_LEN: 600,
+  OCTAVE_MIN:     2,      // octava mínima disponible
+  OCTAVE_MAX:     6,      // octava máxima disponible
+  OCTAVE_DEFAULT: 3,      // octava al iniciar o resetear
+  ATTACK_TIME:    0.03,   // segundos de fade-in al presionar una tecla
+  RELEASE_TIME:   1.40,   // segundos de fade-out al soltar una tecla
+  KEYMAP_MAX_LEN: 600,    // límite de caracteres en el modal de config
 };
 
+// Volumen base por octava. Las octavas bajas suenan más fuerte
+// naturalmente; estos valores compensan la percepción.
+// Ajustables en tiempo real con los sliders de la UI.
 var OCTAVE_VOL = { 2: 1.00, 3: 0.75, 4: 0.50, 5: 0.25, 6: 0.15 };
+
+// Volumen maestro global (0.0 a 1.0), controlado por el slider de footer
 var _masterVol = 1.0;
 
 
 // ════════════════════════════════════════════════════════════
 // KEY LABELS
 //
-// Diccionario de e.code → etiqueta visual.
+// Diccionario de e.code → etiqueta visual legible.
 // Cumple tres roles:
-//   1. Mostrar etiquetas legibles en los pads y botones.
-//   2. Lista de códigos válidos para el validador del modal.
+//   1. Mostrar etiquetas legibles en los chips de los pads y botones.
+//   2. Lista de códigos válidos para el validador del modal de config.
 //   3. Referencia para el usuario al configurar teclas.
 //
-// Las letras sueltas (a-z, 0-9) son válidas sin estar aquí
-// — se validan por expresión regular en isValidCode().
+// Las letras sueltas (a-z) y dígitos (0-9) son válidos sin
+// estar aquí — se validan por expresión regular en isValidCode().
 //
-// Separador de teclas múltiples: &
-// Ejemplo: Mi=Numpad4&4
+// Separador de teclas múltiples para una misma nota: &
+// Ejemplo en el keymap: Mi=Numpad4&4
+// (tanto Numpad4 como 4 activarán la nota Mi)
 // ════════════════════════════════════════════════════════════
 var KEY_LABELS = {
   "Backspace":      "⌫",
@@ -353,12 +387,16 @@ var KEY_LABELS = {
   "ArrowDown":      "↓",
 };
 
+// Convierte un e.code a su etiqueta visual.
+// Si no está en el diccionario y es una sola letra, la pone en mayúscula.
 function keyLabel(code) {
   if (KEY_LABELS[code]) return KEY_LABELS[code];
   if (code.length === 1) return code.toUpperCase();
   return code;
 }
 
+// Devuelve true si el código es una tecla reconocida.
+// Acepta códigos del diccionario KEY_LABELS o letras/dígitos sueltos.
 function isValidCode(code) {
   if (KEY_LABELS[code]) return true;
   if (/^[a-z0-9]$/.test(code)) return true;
@@ -370,7 +408,8 @@ function isValidCode(code) {
 // KEYMAPS
 //
 // Mapeo NombreNota → CodigoTecla(s).
-// Separar varias teclas para la misma nota con &.
+// Para asignar varias teclas a la misma nota, separarlas con &.
+// Ejemplo: Mi=Numpad4&4
 //
 // Claves reservadas para controles de octava:
 //   Oct-   → bajar octava
@@ -378,7 +417,8 @@ function isValidCode(code) {
 //   OctRst → resetear octava al valor por defecto
 //
 // El usuario puede editar estos valores desde el modal ⚙.
-// Los cambios se guardan en localStorage por layout.
+// Los cambios se guardan en localStorage por layout y se
+// restauran automáticamente al iniciar la app.
 // ════════════════════════════════════════════════════════════
 var KEYMAP_NUMPAD = {
   "Do":     "Numpad1",
@@ -424,6 +464,7 @@ var KEYMAP_QWERTY = {
   "OctRst": "Control",
 };
 
+// Agrupa los keymaps por id de layout para acceso dinámico
 var KEYMAPS = {
   numpad: KEYMAP_NUMPAD,
   qwerty: KEYMAP_QWERTY,
@@ -433,17 +474,25 @@ var KEYMAPS = {
 // ════════════════════════════════════════════════════════════
 // LAYOUTS
 //
-// Define la estructura musical de cada modo.
-// Los pads no tienen key — se resuelve desde el keymap en
-// switchLayout(), lo que permite cambiar teclas sin tocar
-// la estructura musical.
+// Define la estructura musical de cada modo de teclado.
+// Los pads no tienen key — la tecla se resuelve desde el
+// keymap activo en switchLayout(), desacoplando la estructura
+// musical del mapeo de teclas.
 //
-// label es opcional: si existe, se muestra en el pad en vez
-// de name. name es siempre la clave interna del keymap.
+// Campos de cada pad:
+//   name      — clave interna, debe coincidir con el keymap
+//   midi      — número MIDI base (Do central = 60, octava 4)
+//   octOffset — 0 = octava activa, 1 = octava activa + 1
+//   label     — (opcional) texto a mostrar en el pad;
+//               si no existe, se muestra name
 //
-// octaveDown/Up/Home son arrays para soportar múltiples teclas.
-// Se actualizan desde el keymap en switchLayout() usando
-// las claves reservadas Oct-/Oct+/OctRst.
+// octaveDown/Up/Home son arrays para soportar múltiples teclas
+// por acción. Se actualizan desde el keymap en switchLayout()
+// usando las claves reservadas Oct-/Oct+/OctRst.
+//
+// Las filas van de abajo (Row 0) hacia arriba (Row N).
+// El CSS usa flex-direction:column-reverse para renderizarlas
+// en el orden visual correcto, como un teclado físico.
 // ════════════════════════════════════════════════════════════
 var LAYOUTS = {
 
@@ -519,29 +568,34 @@ var LAYOUTS = {
 // ════════════════════════════════════════════════════════════
 // LAYOUT STATE
 //
-// ALL_PADS — lista plana de pads con key resuelta desde keymap.
-// KEY_MAP  — { codigoTecla → pad } para detección rápida.
-// Ambos se reconstruyen en switchLayout().
+// ALL_PADS — lista plana de todos los pads del layout activo,
+//            cada uno con su key resuelta desde el keymap.
+// KEY_MAP  — { codigoTecla → pad } para detección O(1) en keydown.
+//            Si una nota tiene múltiples teclas (Mi=Numpad4&4),
+//            hay una entrada por cada tecla apuntando al mismo pad.
+//
+// Ambos se reconstruyen completamente en switchLayout().
 // ════════════════════════════════════════════════════════════
 var activeLayoutId = "";
 var ALL_PADS       = [];
 var KEY_MAP        = {};
 
 function switchLayout(id) {
-  releaseAllNotes();
+  releaseAllNotes();   // liberar notas antes de cambiar para evitar notas colgadas
   activeLayoutId = id;
   var layout = LAYOUTS[id];
   var keymap = layout.keymap;
 
-  // Resolver key de cada pad desde el keymap activo
+  // Construir lista plana de pads con key resuelta desde el keymap
   ALL_PADS = layout.rows.reduce(function(acc, row) {
     return acc.concat(row.pads.map(function(pad) {
       return Object.assign({}, pad, { key: keymap[pad.name] });
     }));
   }, []);
 
-  // Registrar una entrada en KEY_MAP por cada tecla del pad
-  // (soporte para múltiples teclas separadas por &)
+  // Registrar una entrada en KEY_MAP por cada tecla del pad.
+  // Si pad.key es "Numpad4&4", se crean dos entradas que
+  // apuntan al mismo objeto pad.
   KEY_MAP = ALL_PADS.reduce(function(map, pad) {
     pad.key.split("&").forEach(function(k) {
       map[k.trim()] = pad;
@@ -549,8 +603,8 @@ function switchLayout(id) {
     return map;
   }, {});
 
-  // Resolver teclas de control de octava desde el keymap
-  // como arrays para soportar múltiples teclas por acción
+  // Resolver teclas de control de octava desde el keymap como arrays.
+  // Soporta múltiples teclas por acción (Oct-=Numpad0&ArrowDown).
   if (keymap["Oct-"])   layout.octaveDown = keymap["Oct-"].split("&").map(function(k){ return k.trim(); });
   if (keymap["Oct+"])   layout.octaveUp   = keymap["Oct+"].split("&").map(function(k){ return k.trim(); });
   if (keymap["OctRst"]) layout.octaveHome = keymap["OctRst"].split("&").map(function(k){ return k.trim(); });
@@ -562,18 +616,28 @@ function switchLayout(id) {
 // ════════════════════════════════════════════════════════════
 var State = {
   octave:  CFG.OCTAVE_DEFAULT,
-  held:    {},     // { codigoTecla → true } teclas físicas presionadas
-  octHeld: false,  // evita repetición de cambio de octava por key repeat del OS
+  held:    {},     // { codigoTecla → true } teclas físicas actualmente presionadas
+  octHeld: false,  // true mientras una tecla de octava está presionada,
+                   // evita que el OS repita el evento keydown
 };
 
 
 // ════════════════════════════════════════════════════════════
 // AUDIO ENGINE
 //
-// Módulo aislado. ctx y masterGain se crean lazy al primer
-// gesto del usuario, cumpliendo la política de autoplay.
+// Módulo aislado con IIFE. Nadie fuera puede acceder a ctx,
+// masterGain o active directamente.
+//
+// El AudioContext se crea lazy al primer gesto del usuario,
+// cumpliendo la política de autoplay de Chrome/Safari.
+//
 // La ganancia maestra se ajusta dinámicamente con 1/√n
-// para evitar clipping con múltiples notas simultáneas.
+// donde n = notas activas, para evitar clipping cuando
+// suenan varias notas al mismo tiempo.
+//
+// Wake Lock: mantiene la pantalla activa mientras se usa la app.
+// Se solicita al crear el AudioContext y se reactiva
+// automáticamente si la app vuelve al primer plano.
 // ════════════════════════════════════════════════════════════
 var Audio = (function() {
   var ctx        = null;
@@ -591,15 +655,15 @@ var Audio = (function() {
     return ctx;
   }
 
-  // Wake Lock — mantiene la pantalla activa mientras se usa la app
   var wakeLock = null;
   function _requestWakeLock() {
     if ("wakeLock" in navigator) {
       navigator.wakeLock.request("screen")
         .then(function(lock) { wakeLock = lock; })
-        .catch(function() {});
+        .catch(function() {});   // silencioso si el navegador no lo soporta
     }
   }
+  // Reactivar Wake Lock cuando la app vuelve al primer plano
   document.addEventListener("visibilitychange", function() {
     if (document.visibilityState === "visible") _requestWakeLock();
   });
@@ -610,17 +674,20 @@ var Audio = (function() {
     masterGain.gain.setTargetAtTime(_masterVol / Math.sqrt(n), ctx.currentTime, 0.008);
   }
 
+  // Convierte número MIDI a frecuencia Hz
   function midiToFreq(midi) {
     var raw = 440 * Math.pow(2, (midi - 69) / 12);
     return Math.ceil(raw * 100) / 100;
   }
 
+  // Calcula la frecuencia de un pad según la octava activa
   function freqForPad(pad, octave) {
     return midiToFreq(pad.midi + (octave + pad.octOffset - 4) * 12);
   }
 
+  // Inicia una nota con fade-in suave. padKey es el identificador único.
   function start(padKey, freq, vol) {
-    if (active[padKey]) return;
+    if (active[padKey]) return;   // ya está sonando
     var c = getCtx();
     var g = c.createGain();
     g.gain.setValueAtTime(0, c.currentTime);
@@ -635,6 +702,7 @@ var Audio = (function() {
     _updateMasterGain();
   }
 
+  // Detiene una nota con fade-out exponencial suave
   function stop(padKey) {
     var entry = active[padKey];
     if (!entry) return;
@@ -646,6 +714,7 @@ var Audio = (function() {
     _updateMasterGain();
   }
 
+  // Detiene todas las notas activas (usado al cambiar layout)
   function stopAll() {
     Object.keys(active).forEach(stop);
   }
@@ -664,8 +733,9 @@ var Audio = (function() {
 // ════════════════════════════════════════════════════════════
 // NOTE ACTIONS
 //
-// primaryKey — primera tecla del string (antes del primer &)
-// usada como identificador único de la nota en el motor de audio.
+// primaryKey — primera tecla del string (antes del primer &).
+// Se usa como identificador único de la nota en el motor de
+// audio, independiente de cuántas teclas tenga asignadas.
 // ════════════════════════════════════════════════════════════
 
 function playPad(pad) {
@@ -683,6 +753,8 @@ function releasePad(pad) {
   setPadActive(pad, false);
 }
 
+// Libera todas las notas y limpia el estado.
+// Se llama al cambiar de layout o al abrir el modal de config.
 function releaseAllNotes() {
   Object.keys(State.held).forEach(function(k) {
     var pad = KEY_MAP[k];
@@ -707,6 +779,7 @@ function setOctave(oct) {
   document.getElementById("btnDown").disabled = oct === CFG.OCTAVE_MIN;
   document.getElementById("btnUp").disabled   = oct === CFG.OCTAVE_MAX;
 
+  // Resaltar la celda del slider de la octava activa
   [2, 3, 4, 5, 6].forEach(function(o) {
     var cell = document.getElementById("volcell-" + o);
     if (cell) cell.classList.toggle("active-oct", o === oct);
@@ -720,6 +793,7 @@ function setOctave(oct) {
 // DOM HELPERS
 // ════════════════════════════════════════════════════════════
 
+// Actualiza las frecuencias mostradas en todos los pads
 function updateFreqLabels() {
   ALL_PADS.forEach(function(pad) {
     var el = document.getElementById("freq-" + pad.key);
@@ -727,19 +801,23 @@ function updateFreqLabels() {
   });
 }
 
+// Activa o desactiva el estado visual de un pad (color de acento)
 function setPadActive(pad, on) {
   var el = document.getElementById("pad-" + pad.key);
   if (el) el.classList.toggle("active", on);
 }
 
+// Actualiza los chips de tecla en los botones de octava.
+// Muestra solo la primera tecla de cada acción.
 function updateOctaveButtonTitles(layoutId) {
   var lay = LAYOUTS[layoutId];
-  // Muestra solo la primera tecla de cada acción de octava
   document.getElementById("keyDown").textContent = keyLabel(lay.octaveDown[0]);
   document.getElementById("keyUp").textContent   = keyLabel(lay.octaveUp[0]);
   document.getElementById("keyHome").textContent = keyLabel(lay.octaveHome[0]);
 }
 
+// Devuelve true si el modal de configuración está abierto.
+// Se usa para desactivar el teclado musical mientras se edita.
 function isModalOpen() {
   return document.getElementById("configModal").classList.contains("open");
 }
@@ -748,12 +826,15 @@ function isModalOpen() {
 // ════════════════════════════════════════════════════════════
 // KEYBOARD HANDLER
 //
-// normalizeKey() traduce el evento crudo a un identificador
-// consistente. Usa e.code para numpad (independiente de NumLock)
-// y e.key para el resto.
+// normalizeKey() traduce el evento crudo del navegador a un
+// identificador consistente usado en KEY_MAP y los layouts.
 //
-// Cuando el modal está abierto, el teclado queda libre para
-// escribir en el textarea sin disparar notas.
+// Para el numpad usa e.code, que es independiente del estado
+// de NumLock (Numpad4 siempre es Numpad4, no "4" o "ArrowLeft").
+// Para las demás teclas usa e.key en minúscula.
+//
+// Cuando el modal está abierto, el handler retorna sin hacer
+// nada, dejando el teclado libre para escribir en el textarea.
 // ════════════════════════════════════════════════════════════
 
 function normalizeKey(e) {
@@ -774,10 +855,12 @@ document.addEventListener("keydown", function(e) {
   var k   = normalizeKey(e);
   var lay = LAYOUTS[activeLayoutId];
 
+  // Controles de octava — usan .includes() porque octaveDown/Up/Home son arrays
   if (lay.octaveDown.includes(k)) { e.preventDefault(); if (!State.octHeld) { State.octHeld = true; setOctave(State.octave - 1); flashBtn("btnDown");  } return; }
   if (lay.octaveUp.includes(k))   { e.preventDefault(); if (!State.octHeld) { State.octHeld = true; setOctave(State.octave + 1); flashBtn("btnUp");    } return; }
   if (lay.octaveHome.includes(k)) { e.preventDefault(); if (!State.octHeld) { State.octHeld = true; setOctave(CFG.OCTAVE_DEFAULT); flashBtn("btnReset"); } return; }
 
+  // Disparar nota
   var pad = KEY_MAP[k];
   if (pad && !State.held[k]) {
     e.preventDefault();
@@ -792,11 +875,13 @@ document.addEventListener("keyup", function(e) {
   var k   = normalizeKey(e);
   var lay = LAYOUTS[activeLayoutId];
 
+  // Liberar lock de octava
   if (lay.octaveDown.includes(k) || lay.octaveUp.includes(k) || lay.octaveHome.includes(k)) {
     State.octHeld = false;
     return;
   }
 
+  // Soltar nota
   if (State.held[k]) {
     delete State.held[k];
     var pad = KEY_MAP[k];
@@ -806,8 +891,8 @@ document.addEventListener("keyup", function(e) {
 
 
 // ════════════════════════════════════════════════════════════
-// BUILD UI — Sliders de volumen
-// Se construye una sola vez al cargar.
+// BUILD UI — Sliders de volumen por octava
+// Se construye una sola vez al cargar la página.
 // ════════════════════════════════════════════════════════════
 
 (function buildVolGrid() {
@@ -846,8 +931,9 @@ function buildPadGrid() {
     rowEl.dataset.cols = rowDef.cols;
 
     rowDef.pads.forEach(function(pad) {
-      // Resolver el pad por la primera tecla del keymap
-      var resolvedPad = KEY_MAP[LAYOUTS[activeLayoutId].keymap[pad.name].split("&")[0].trim()];
+      // Resolver el pad usando la primera tecla del keymap
+      var firstKey    = LAYOUTS[activeLayoutId].keymap[pad.name].split("&")[0].trim();
+      var resolvedPad = KEY_MAP[firstKey];
       if (!resolvedPad) return;
 
       var el = document.createElement("div");
@@ -855,13 +941,17 @@ function buildPadGrid() {
       el.id = "pad-" + resolvedPad.key;
 
       el.innerHTML =
+        // label es el texto visible; name es la clave interna
         '<span class="pad-note">' + (resolvedPad.label || resolvedPad.name) + '</span>' +
         '<span class="pad-freq" id="freq-' + resolvedPad.key + '">-- Hz</span>' +
+        // El chip muestra solo la primera tecla asignada
         '<span class="pad-key">' + keyLabel(resolvedPad.key.split("&")[0].trim()) + '</span>';
 
+      // Mouse events
       el.addEventListener("mousedown",  function(e) { e.preventDefault(); playPad(resolvedPad); el._held = true; });
       el.addEventListener("mouseup",    function()  { releasePad(resolvedPad); el._held = false; });
       el.addEventListener("mouseleave", function()  { if (el._held) { releasePad(resolvedPad); el._held = false; } });
+      // Touch events
       el.addEventListener("touchstart", function(e) { e.preventDefault(); playPad(resolvedPad); });
       el.addEventListener("touchend",   function(e) { e.preventDefault(); releasePad(resolvedPad); });
 
@@ -878,9 +968,10 @@ function buildPadGrid() {
 // ════════════════════════════════════════════════════════════
 // BUTTON EVENTS
 //
-// bindBtn resuelve el doble disparo touch/click en móvil:
-// touchstart ejecuta y marca handled; el click sintético
-// posterior se ignora.
+// bindBtn resuelve el problema de doble disparo en móvil:
+// touchstart ejecuta la acción y marca handled=true; el click
+// sintético que el navegador genera después se ignora.
+// Todos los botones usan este mismo patrón para consistencia.
 // ════════════════════════════════════════════════════════════
 
 function flashBtn(id) {
@@ -914,6 +1005,7 @@ bindBtn("btnLayout", function() {
   switchLayout(nextId);
   buildPadGrid();
   updateOctaveButtonTitles(nextId);
+  // El botón muestra el layout al que se cambiará en el próximo click
   document.getElementById("btnLayout").textContent =
     "⌨ " + (nextId === "numpad" ? "QWERTY" : "Numérico");
 });
@@ -930,36 +1022,48 @@ document.getElementById("masterVolSlider").addEventListener("input", function() 
 //
 // Permite editar el keymap del layout activo desde la app.
 // El textarea siempre muestra la configuración actual lista
-// para editar. Al guardar se valida:
-//   - Formato correcto (nombre=tecla por línea)
-//   - Códigos de tecla reconocidos
-//   - Sin teclas duplicadas entre notas distintas
-//   - Sin líneas con valor vacío o sin signo =
+// para editar — nunca está vacío.
 //
-// Los cambios se guardan en localStorage y se aplican
+// Validaciones al guardar (en orden):
+//   1. Líneas malformadas (sin = o valor vacío)
+//   2. Nombres de nota desconocidos (no existen en el keymap)
+//   3. Nombres duplicados (misma nota dos veces)
+//   4. Códigos de tecla no reconocidos
+//   5. Teclas duplicadas entre notas distintas
+//
+// Si cualquier validación falla, se muestra el error en rojo
+// y no se aplica ningún cambio.
+//
+// Los cambios válidos se guardan en localStorage y se aplican
 // inmediatamente sin recargar la app.
 //
-// Formato:
+// Formato del texto de configuración:
 //   NombreNota=CodigoTecla
 //   Do=Numpad1
-//   Mi=Numpad4&4    ← dos teclas para la misma nota
+//   Mi=Numpad4&4     ← dos teclas para la misma nota
 //   Oct-=Numpad0
 // ════════════════════════════════════════════════════════════
 
+// Convierte el objeto keymap a texto plano para mostrar en el textarea
 function keymapToText(keymap) {
   return Object.keys(keymap).map(function(name) {
     return name + "=" + keymap[name];
   }).join("\n");
 }
 
-// Parsea el texto del textarea en un objeto { nombre → teclas }
-// y recolecta advertencias de líneas malformadas.
+// Parsea el texto del textarea en { map, warnings }.
+// map      — objeto { nombre → teclas } con las entradas válidas
+// warnings — array de strings describiendo líneas malformadas
+// Usa indexOf("=") para encontrar solo el primer = de cada línea,
+// permitiendo que el valor contenga = si fuera necesario.
+// Ignora líneas vacías y espacios extra — el usuario puede
+// organizar el texto libremente con saltos de línea.
 function textToKeymap(text) {
   var map      = {};
   var warnings = [];
   text.trim().split("\n").forEach(function(line) {
     line = line.trim();
-    if (!line) return;
+    if (!line) return;   // ignorar líneas vacías
     var idx = line.indexOf("=");
     if (idx === -1) {
       warnings.push(line + " (falta el =)");
@@ -988,6 +1092,13 @@ function clearConfigError() {
   el.classList.remove("visible");
 }
 
+function updateConfigCounter(len) {
+  var counter = document.getElementById("configCounter");
+  counter.textContent = len + " / " + CFG.KEYMAP_MAX_LEN;
+  // Avisar visualmente cuando se acerca al límite (90%)
+  counter.classList.toggle("warning", len >= CFG.KEYMAP_MAX_LEN * 0.9);
+}
+
 function openConfigModal() {
   var saved = localStorage.getItem("keymap_" + activeLayoutId);
   document.getElementById("configTitle").textContent =
@@ -996,7 +1107,7 @@ function openConfigModal() {
   document.getElementById("configText").value = text;
   updateConfigCounter(text.length);
   clearConfigError();
-  releaseAllNotes();
+  releaseAllNotes();   // liberar notas antes de abrir
   document.getElementById("configModal").classList.add("open");
 }
 
@@ -1004,24 +1115,18 @@ function closeConfigModal() {
   document.getElementById("configModal").classList.remove("open");
 }
 
-function updateConfigCounter(len) {
-  var counter = document.getElementById("configCounter");
-  counter.textContent = len + " / " + CFG.KEYMAP_MAX_LEN;
-  counter.classList.toggle("warning", len >= CFG.KEYMAP_MAX_LEN * 0.9);
-}
-
 function saveConfig() {
   var text   = document.getElementById("configText").value;
   var result = textToKeymap(text);
   var newMap = result.map;
 
-  // Advertir líneas malformadas
+  // 1. Líneas malformadas
   if (result.warnings.length > 0) {
     showConfigError("Líneas ignoradas: " + result.warnings.join(", "));
     return;
   }
 
-  // Validar que los nombres de nota existan en el keymap activo
+  // 2. Nombres de nota desconocidos
   var validNames = Object.keys(KEYMAPS[activeLayoutId]);
   var unknown = Object.keys(newMap).filter(function(name) {
     return validNames.indexOf(name) === -1;
@@ -1031,7 +1136,37 @@ function saveConfig() {
     return;
   }
 
-  // Validar códigos de tecla
+  // 3. Nombres duplicados (misma nota aparece dos veces en el texto)
+  var nameSeen  = {};
+  var dupNames  = [];
+  text.trim().split("\n").forEach(function(line) {
+    line = line.trim();
+    if (!line) return;
+    var idx = line.indexOf("=");
+    if (idx === -1) return;
+    var name = line.slice(0, idx).trim();
+    if (!name) return;
+    if (nameSeen[name]) {
+      dupNames.push(name);
+    } else {
+      nameSeen[name] = true;
+    }
+  });
+  if (dupNames.length > 0) {
+    showConfigError("Notas duplicadas: " + dupNames.join(", "));
+    return;
+  }
+
+  // 4. Nombres de nota faltantes (todas las notas del keymap deben estar presentes)
+  var missing = validNames.filter(function(name) {
+    return !(name in newMap);
+  });
+  if (missing.length > 0) {
+    showConfigError("Notas faltantes: " + missing.join(", "));
+    return;
+  }
+
+  // 5. Códigos de tecla no reconocidos
   var invalid = Object.keys(newMap).filter(function(name) {
     return newMap[name].split("&").some(function(k) {
       return !isValidCode(k.trim());
@@ -1043,25 +1178,25 @@ function saveConfig() {
     return;
   }
 
-  // Validar teclas duplicadas entre notas distintas
-  var seen       = {};
-  var duplicates = [];
+  // 6. Teclas duplicadas entre notas distintas
+  var keySeen    = {};
+  var dupKeys    = [];
   Object.keys(newMap).forEach(function(name) {
     newMap[name].split("&").forEach(function(k) {
       k = k.trim();
-      if (seen[k]) {
-        duplicates.push(k + " en " + seen[k] + " y " + name);
+      if (keySeen[k]) {
+        dupKeys.push(k + " en " + keySeen[k] + " y " + name);
       } else {
-        seen[k] = name;
+        keySeen[k] = name;
       }
     });
   });
-  if (duplicates.length > 0) {
-    showConfigError("Teclas duplicadas: " + duplicates.join(", "));
+  if (dupKeys.length > 0) {
+    showConfigError("Teclas duplicadas: " + dupKeys.join(", "));
     return;
   }
 
-  // Aplicar y guardar
+  // Todo válido — aplicar y guardar
   Object.assign(KEYMAPS[activeLayoutId], newMap);
   try {
     localStorage.setItem("keymap_" + activeLayoutId, text);
@@ -1076,7 +1211,9 @@ function saveConfig() {
   closeConfigModal();
 }
 
-// Aplica keymaps guardados en localStorage al iniciar
+// Al iniciar, restaurar keymaps guardados en localStorage.
+// Solo sobreescribe las entradas presentes — las demás quedan
+// con sus valores por defecto del código.
 function applyStoredKeymaps() {
   ["numpad", "qwerty"].forEach(function(id) {
     var saved = localStorage.getItem("keymap_" + id);
@@ -1087,10 +1224,10 @@ function applyStoredKeymaps() {
 bindBtn("btnConfig", openConfigModal);
 document.getElementById("btnConfigCancel").addEventListener("click", closeConfigModal);
 document.getElementById("btnConfigSave").addEventListener("click", saveConfig);
+// Cerrar modal al hacer click en el fondo semitransparente
 document.getElementById("configModal").addEventListener("click", function(e) {
   if (e.target === this) closeConfigModal();
 });
-
 // Contador de caracteres en tiempo real
 document.getElementById("configText").addEventListener("input", function() {
   updateConfigCounter(this.value.length);
@@ -1099,6 +1236,8 @@ document.getElementById("configText").addEventListener("input", function() {
 
 // ════════════════════════════════════════════════════════════
 // INIT
+// Orden importante: primero aplicar keymaps guardados,
+// luego construir el layout, luego la UI.
 // ════════════════════════════════════════════════════════════
 applyStoredKeymaps();
 switchLayout("numpad");
@@ -1107,13 +1246,16 @@ setOctave(CFG.OCTAVE_DEFAULT);
 updateOctaveButtonTitles("numpad");
 document.getElementById("masterVolSlider").value = 100;
 
+// PWA: registrar Service Worker para funcionamiento offline
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(function() {});
 }
 
 /*
-CONFIGURACION — pegar en el modal ⚙
----------------------------------------
+════════════════════════════════════════════════════════════
+REFERENCIA DE CONFIGURACIÓN — pegar en el modal ⚙
+════════════════════════════════════════════════════════════
+
 Teclado Numérico
 
 Do=Numpad1
@@ -1136,7 +1278,8 @@ Oct-=Numpad0
 Oct+=NumpadDecimal
 OctRst=Tab
 
----------------------------------------
+────────────────────────────────────────────────────────────
+
 Teclado QWERTY
 
 Do=c
@@ -1158,6 +1301,8 @@ Ri'=6
 Oct-=Alt
 Oct+=Space
 OctRst=Control
+
+════════════════════════════════════════════════════════════
 */
 </script>
 </body>
