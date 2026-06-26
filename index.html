@@ -741,8 +741,8 @@ function normalizeKey(e) {
   if (e.code === "Tab")     return "Tab";
   if (e.key  === "Alt")     return "Alt";
   if (e.key  === "Control") return "Control";
-  if (e.code === "NumLock" || e.code.startsWith("Numpad")) return e.code;
-  if (e.key  === "4")       return "Numpad4"; 
+  if (e.code  === "Numpad4")       return "4";
+  if (e.code === "NumLock" || e.code.startsWith("Numpad")) return e.code; 
   if (e.code === "Backspace") return "Backspace";
   
   if (e.code.startsWith("Arrow")) return e.code; 
