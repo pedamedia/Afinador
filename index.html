@@ -539,8 +539,17 @@ function switchLayout(id) {
     }));
   }, []);
 
+  /*
   KEY_MAP = ALL_PADS.reduce(function(map, pad) {
     map[pad.key] = pad;
+    return map;
+  }, {});
+  */
+
+  KEY_MAP = ALL_PADS.reduce(function(map, pad) {
+    pad.key.split("&").forEach(function(k) {
+      map[k.trim()] = pad;
+    });
     return map;
   }, {});
 
@@ -653,6 +662,7 @@ var Audio = (function() {
 // NOTE ACTIONS
 // ════════════════════════════════════════════════════════════
 
+/*
 function playPad(pad) {
   var freq    = Audio.freqForPad(pad, State.octave);
   var realOct = Math.min(CFG.OCTAVE_MAX, State.octave + pad.octOffset);
@@ -663,6 +673,22 @@ function playPad(pad) {
 
 function releasePad(pad) {
   Audio.stop(pad.key);
+  setPadActive(pad, false);
+}
+*/
+
+function playPad(pad) {
+  var primaryKey = pad.key.split("&")[0].trim();
+  var freq    = Audio.freqForPad(pad, State.octave);
+  var realOct = Math.min(CFG.OCTAVE_MAX, State.octave + pad.octOffset);
+  var vol     = OCTAVE_VOL[realOct] || OCTAVE_VOL[CFG.OCTAVE_MAX];
+  Audio.start(primaryKey, freq, vol);
+  setPadActive(pad, true);
+}
+
+function releasePad(pad) {
+  var primaryKey = pad.key.split("&")[0].trim();
+  Audio.stop(primaryKey);
   setPadActive(pad, false);
 }
 
@@ -836,7 +862,8 @@ function buildPadGrid() {
       el.innerHTML =
         '<span class="pad-note">' + (resolvedPad.label || resolvedPad.name) + '</span>' +
         '<span class="pad-freq" id="freq-' + resolvedPad.key + '">-- Hz</span>' +
-        '<span class="pad-key">' + keyLabel(resolvedPad.key) + '</span>';
+        //'<span class="pad-key">' + keyLabel(resolvedPad.key) + '</span>';
+        '<span class="pad-key">' + keyLabel(resolvedPad.key.split("&")[0].trim()) + '</span>';
 
       el.addEventListener("mousedown",  function(e) { e.preventDefault(); playPad(resolvedPad); el._held = true; });
       el.addEventListener("mouseup",    function()  { releasePad(resolvedPad); el._held = false; });
@@ -953,8 +980,15 @@ function closeConfigModal() {
 function saveConfig() {
   var text    = document.getElementById("configText").value;
   var newMap  = textToKeymap(text);
+  /*
   var invalid = Object.keys(newMap).filter(function(name) {
     return !isValidCode(newMap[name]);
+  });
+  */
+  var invalid = Object.keys(newMap).filter(function(name) {
+    return newMap[name].split("&").some(function(k) {
+      return !isValidCode(k.trim());
+    });
   });
 
   if (invalid.length > 0) {
